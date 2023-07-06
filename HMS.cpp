@@ -52,6 +52,7 @@ class Doctor:public User
      void PrescribeMedication() 
      { 
         if(pres->medication==yes) 
-        { //test } 
+        { //test 
+        } 
     } 
 };
