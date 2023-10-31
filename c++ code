@@ -1,0 +1,629 @@
+#include<iostream>
+#include<stack>
+#define RESET   "\033[0m"      // Reset to default text color
+#define RED     "\033[31m"     // Red text color
+#define GREEN   "\033[32m"     // Green text color
+#define YELLOW  "\033[33m"     // Yellow text color
+#define BLUE    "\033[34m"     // Blue text color
+#define MAGENTA "\033[35m"     // Magenta text color
+#define CYAN    "\033[36m"     // Cyan text color
+#define WHITE   "\033[37m"     // White text color
+#define GRAY    "\033[90m"     // Gray text color
+#define LIGHT_RED     "\033[91m"     // Light Red text color
+#define LIGHT_GREEN   "\033[92m"     // Light Green text color
+#define LIGHT_YELLOW  "\033[93m"     // Light Yellow text color
+#define LIGHT_BLUE    "\033[94m"     // Light Blue text color
+#define LIGHT_MAGENTA "\033[95m"     // Light Magenta text color
+#define LIGHT_CYAN    "\033[96m"     // Light Cyan text color
+
+
+using namespace std;
+
+class ExceptionHandler
+{
+public:
+    string errMsg;
+    ExceptionHandler()  {}
+    ExceptionHandler(string a)
+    {
+        errMsg=a;
+    }
+    void showException()
+    {
+        cout<<"Try after some time\n"<<endl;
+    }
+};
+
+class User
+{
+public:
+    int id;
+    string name;
+    int age;
+    string gender;
+    User() {}
+    User(int a,string b,int c,string g)
+    {
+        id=a;
+        name=b;
+        age=c;
+        gender=g;
+    }
+    virtual void printDetails()
+    {
+        cout<<id<<" "<<name<<" "<<age<<" "<<gender<<" ";
+    }
+};
+
+class Appointment
+{
+public:
+    int appointmentId;
+    string date;
+    string time;
+    Appointment() {}
+    Appointment(int a,string d,string t)
+    {
+        appointmentId=a;
+        date=d;
+        time=t;
+    }
+    void confirmAppointment()
+    {
+        string ch;
+        cout<<"\nDo you want to confirm or cancel appointment :";
+        cin>>ch;
+        if(ch=="confirm")
+        {
+            cout<<YELLOW<<"Appointment confirmed on ";
+            cout<<date<<" at "<<time<<endl;
+            cout<<"\n";
+        }
+        else if(ch=="cancel")
+        {
+            cancelAppointment();
+        }
+        else
+        {
+            cout<<"Invalid input"<<endl;
+            throw ExceptionHandler();
+        }
+    }
+    void cancelAppointment()
+    {
+        cout<<"Appointment canceled\n"<<endl;
+        throw ExceptionHandler();
+    }
+};
+
+class PaymentStrategy
+{
+public:
+    virtual int calculatePayment(int charge) = 0;
+};
+
+class FirstTimePaymentStrategy : public PaymentStrategy
+{
+public:
+    int calculatePayment(int charge) override
+    {
+        return charge;
+    }
+};
+
+class ReturningPatientPaymentStrategy : public PaymentStrategy
+{
+public:
+    int calculatePayment(int charge) override
+    {
+        return charge - 0.1 * charge;
+    }
+};
+
+class Patient:public User
+{
+private:
+    PaymentStrategy* paymentStrategy;
+public:
+    Appointment *ap;
+    int charge;
+    int totalcharge;
+    string disease;
+    Patient()
+    {
+        totalcharge=0;
+    }
+    Patient(int id,string name,int age,string gender,int charge):User(id,name,age,gender),charge(charge)
+    {
+        totalcharge=0;
+    }
+
+    void setPaymentStrategy(PaymentStrategy* strategy)
+    {
+        paymentStrategy = strategy;
+    }
+    int computeCharge()
+    {
+        string ch;
+        cout<<LIGHT_MAGENTA<<"\nIs this your first appointment"<<endl;
+        cin>>ch;
+        if(ch=="Yes"||ch=="yes")
+        {
+            paymentStrategy = new FirstTimePaymentStrategy();
+        }
+        else if(ch=="No"||ch=="no")
+        {
+            cout<<"Kindly bring the previous appointment letter while coming to the hospital"<<endl;
+            paymentStrategy = new ReturningPatientPaymentStrategy();
+        }
+        else
+        {
+            cout<<"Invalid input"<<endl;
+            throw ExceptionHandler();
+        }
+        totalcharge = paymentStrategy->calculatePayment(charge);
+        cout << "Total charge to be paid: " << totalcharge << endl;
+        ap->confirmAppointment();
+        return totalcharge;
+    }
+    void printDetails() override
+    {
+        User::printDetails();
+    }
+};
+
+class Prescription
+{
+public:
+    int presId;
+    Patient* p;
+    string medication;
+    string drug;
+    int quantity;
+    int amt;
+    Prescription() {}
+    Prescription(int presId,string drug,int quantity,int amt)
+    {
+        this->presId=presId;
+      //  this->medication=medication;
+        this->drug=drug;
+        this->quantity=quantity;
+        this->amt=amt;
+    }
+
+    void printDetails()
+    {
+        {
+            if (p)
+            {
+                cout<<"Name:"<<p->name<<endl;
+                cout<<"Age:"<<p->age<<endl;
+                cout<<"Gender:"<<p->gender<<endl;
+                cout<<"prescription ID:"<<presId<<endl;
+                cout<<"Drug:"<<drug<<endl;
+                cout<<"Quantity:"<<quantity<<endl;
+            }
+            else
+            {
+                cout << "Prescription details could not be displayed as patient information is missing." << endl;
+            }
+        }
+    }
+};
+
+class Pharmacy
+{
+public:
+    int pid;
+    string name;
+    int price;
+    Prescription *pres;
+    Pharmacy( )
+    {
+        price=0;
+    }
+    Pharmacy(int a,string b)
+    {
+        pid=a;
+        name=b;
+    }
+    int generateBill()
+    {
+
+        if(pres)
+        {
+            price=(pres->quantity)*pres->amt;
+            return price;
+        }
+        else
+        {
+            cout << "No prescription assigned to the pharmacy." << endl;
+            return 0;
+        }
+
+    }
+};
+class Ward
+{
+public:
+    int wardId;
+    string wardName;
+    int capacity;
+    int i=0;
+    int numberOfDays;
+    int total;
+    Ward() {}
+    Ward(int wardId,string wardName,int capacity)
+    {
+        this->wardId=wardId;
+        this->wardName=wardName;
+        this->capacity=capacity;
+    }
+    void capacityUpdate()
+    {
+        while(i<capacity)
+        {
+            i++;
+            break;
+        }
+        cout << "Ward available! Remaining capacity: " << capacity - i << endl;
+        //printdetails();
+    }
+    void printdetails()
+    {
+        cout<<"wardID:"<<wardId<<"\n"<<"wardName:"<<wardName<<"\n";
+    }
+    void amount()
+    {
+        cout<<YELLOW<<"its your discharge day!"<<endl;
+        cout<<LIGHT_MAGENTA<<"How many days you stayed in this ward?"<<endl;
+        cin>>numberOfDays;
+        total=1000*numberOfDays;
+        cout<<"Total amount to be paid:"<<total<<endl;
+
+    }
+};
+//template<typename data1,typename data2>
+class Test
+{
+public:
+    /*data1 testId;
+    data2 testType;
+    data2 result;*/
+    string ch;
+    int testId;
+    string testType;
+    string result;
+    Pharmacy *ph;
+    Ward *w;
+    Test() {}
+    Test(int testId,string testType)
+    {
+        this->testId=testId;
+        this->testType=testType;
+    }
+
+    void testSeverity()
+    {
+        cout<<"Test id:"<<testId<<"\nTest name:"<<testType;
+        cout<<"\nwhat is the test result?"<<endl;
+        cin>>result;
+        if(result=="positive")
+        {
+            cout<<YELLOW<<"Result is positive!"<<endl;
+            cout<<LIGHT_MAGENTA<<"Do Patient wants to shift to the ward?"<<endl;
+            cin>>ch;
+            if(ch=="yes"||ch=="Yes")
+            {
+                cout<<"We will soon shift you to the ward!"<<endl;
+                w->capacityUpdate();
+                w->printdetails();
+                w->amount();
+
+            }
+            else if(ch=="no"||ch=="No")
+            {
+                cout<<"Okay take care!"<<endl;
+                ph->generateBill();
+
+            }
+
+        }
+
+        else if(result=="negative")
+        {
+            cout<<"Result is negative!"<<endl;
+            ph->generateBill();
+        }
+
+    }
+};
+
+
+class Doctor:public User
+{
+public:
+    string specialization;
+    string qualification;
+    Prescription *pres;
+    Test *t;
+    Pharmacy *ph;
+    Doctor() {}
+    Doctor(int id,string name,int age,string gender,string specialization,string qualification):User(id,name,age,gender)
+    {
+        this->specialization=specialization;
+        this->qualification=qualification;
+    }
+    void prescribeMedication()
+    {
+        cout<<LIGHT_MAGENTA<<"Enter medication of the patient(yes/no):";
+        cin>>pres->medication;
+        if(pres!=nullptr && pres->medication=="Yes"||pres->medication=="yes")
+        {
+            t->testSeverity();
+        }
+        if(pres!=nullptr && pres->medication=="No"||pres->medication=="no")
+        {
+            ph->generateBill();
+        }
+
+    }
+    void printDetails()
+    {
+        User::printDetails();
+        cout<<specialization<<" "<<qualification<<endl;
+    }
+};
+
+
+
+class Bill
+{
+public:
+    Patient *p;
+    Pharmacy *ph;
+    int totalAmt;
+    Bill()
+    {
+        totalAmt=0;
+    }
+    void computeTotalBill()
+    {
+        if (p && ph)
+        {
+            totalAmt = ph->price + p->totalcharge;
+            cout << "Total bill: " << totalAmt << endl;
+        }
+    }
+
+};
+
+
+class NonMedicalStaff:public User
+{
+public:
+    Test *t;
+    Ward *w;
+    NonMedicalStaff() {}
+    void WardDecision()
+    {
+        if(w->capacity!=0)
+        {
+            w->capacityUpdate();
+        }
+        else
+        {
+            cout<<"There is no ward room left in this hospital we will shift you to the other hospital"<<endl;
+            throw ExceptionHandler();
+        }
+    }
+};
+
+class Nurse : public User
+{
+public:
+    Ward *w;
+    Nurse() {}
+    Nurse(int id, string name, int age, string gender, Ward *ward) : User(id, name, age, gender)
+    {
+        w = ward;
+    }
+
+    void printDetails()
+    {
+        User::printDetails();
+        cout << "Nurse" << endl;
+    }
+
+    void assignWard(Ward *ward)
+    {
+        w = ward;
+    }
+
+    void performDuties()
+    {
+        cout << name << " is performing nursing duties in " << w->wardName << endl;
+    }
+};
+
+
+
+
+int main()
+{
+    string ch;
+    cout << "\n";
+    cout << "      " <<LIGHT_GREEN<< "----------------------------" << "APPOINTMENT FORM" << "-------------------------" << endl;
+    cout << "\n";
+    try
+
+    {
+        Patient p1;
+        cout<<LIGHT_MAGENTA<<"Enter Patient Details: "<<endl;
+        cout<<"ID:";
+        cin>>p1.id;
+        cout<<"Name:";
+        cin>>p1.name;
+        cout<<"Age:";
+        cin>>p1.age;
+        cout<<"Gender:";
+        cin>>p1.gender;
+        p1.charge=500;
+        p1.ap = new Appointment(1, "2023-07-13", "10:00 AM");
+
+        //p1.printDetails();
+        cout<<LIGHT_MAGENTA<<"\nWhat are you suffering from?"<<endl;
+        cin.ignore();
+        getline(cin,p1.disease);
+        cout<<LIGHT_RED<<"\nPatient details\n";
+        p1.printDetails();
+        cout<<p1.disease<<endl;;
+
+        Doctor d[]=
+        {
+            Doctor(1, "Doctor1", 35, "Male", "Cardiologist", "MD"),
+            Doctor(2, "Doctor2", 40, "Female", "General Medicine", "MD"),
+            Doctor(3, "Doctor3", 45, "Male", "Orthopedician", "MS"),
+            Doctor(4, "Doctor4", 38, "Female", "Dermatologist", "MD"),
+            Doctor(5, "Doctor5", 42, "Male", "Neurologist", "MD")
+        };
+        cout<<LIGHT_RED<<"\nAvailable Doctor details"<<endl;
+        for(int i=0; i<5; i++)
+            d[i].printDetails();
+        cout<<"\n";
+        p1.computeCharge();
+        if(p1.disease=="heart disease")
+        {
+            cout<<"Assigned doctor :";
+            d[0].printDetails();
+        }
+        else if(p1.disease=="cold"||p1.disease=="fever")
+        {
+            cout<<"Assigned doctor :";
+            d[1].printDetails();
+        }
+        else if(p1.disease=="bone disease")
+        {
+            cout<<"Assigned doctor :";
+            d[2].printDetails();
+        }
+        else if(p1.disease=="skin disease")
+        {
+            cout<<"Assigned doctor :";
+            d[3].printDetails();
+        }
+        else if(p1.disease=="nerve disease")
+        {
+            cout<<"Assigned doctor :";
+            d[4].printDetails();
+        }
+        else
+        {
+            cout<<"Doctor is not available for the particular disease!"<<endl;
+            throw ExceptionHandler();
+        }
+        cout<<"\n";
+
+
+        cout << "      " <<LIGHT_GREEN<< "----------------------------" << "WELCOME TO THE HOSPITAL" << "-------------------------" << endl;
+        cout << "\n";
+        while(1)
+        {
+            Prescription presc1(1, "MedicineA", 2, 100);
+            Prescription presc2(2,  "MedicineB", 3, 50);
+            Prescription presc3(3,  "MedicineC", 1, 200);
+            Prescription presc4(4,  "MedicineD", 4, 75);
+            Prescription presc5(5,  "MedicineE", 3, 60);
+
+            Test t1(1, "Blood Test");
+            Test t2(2, "Urine Test");
+            Test t3(3, "X-Ray");
+            Test t4(4, "CT Scan");
+            Test t5(5, "MRI");
+
+            Pharmacy ph1(1, "MedicineA");
+            Pharmacy ph2(2, "MedicineB");
+            Pharmacy ph3(3, "MedicineC");
+            Pharmacy ph4(4, "MedicineD");
+            Pharmacy ph5(5, "MedicineE");
+
+            Ward w1(1, "Ward1", 10);
+            Ward w2(2, "Ward2", 15);
+            Ward w3(3, "Ward3", 8);
+            Ward w4(4, "Ward4", 20);
+            Ward w5(5, "Ward5", 12);
+
+            NonMedicalStaff nms1;
+            NonMedicalStaff nms2;
+            NonMedicalStaff nms3;
+            NonMedicalStaff nms4;
+            NonMedicalStaff nms5;
+
+            presc1.p = &p1;
+            cout <<LIGHT_RED<< "\nDetails of prescriptions:" << endl;
+            presc1.printDetails();
+            t1.ph=&ph1;
+            ph1.pres = &presc1;
+            d[1].t = &t1;
+            d[1].pres = &presc1;
+            d[1].ph=&ph1;
+            t1.ph=&ph1;
+              t1.w=&w1;
+            d[1].prescribeMedication();
+
+            /*cin>>ch;
+            if (ch == "yes" || ch == "Yes"){
+            nms1.t = &t1;
+            nms1.w = &w1;
+            nms1.WardDecision();
+
+            Nurse n(1,"nurse1",30,"female",&w1);
+            n.assignWard(&w1);
+            n.performDuties();
+            w1.amount();
+            }
+            else if (ch == "no" || ch == "No"){}*/
+
+            cout << "\nDetails of pharmacy bills:" << endl;
+            cout << "Bill for MedicineA: " << ph1.generateBill() << endl;
+           Bill b;
+            b.p=&p1;
+            b.ph=&ph1;
+            b.computeTotalBill();
+
+            cout<<"\n"<<endl;
+            /*presc2.p = &p1;
+            presc2.printDetails();
+            ph2.pres = &presc2;
+            cout << "\nDetails of pharmacy bills:" << endl;
+            cout << "Bill for MedicineA: " << ph2.generateBill() << endl;
+            d[1].pres = &presc2;
+            d[1].ph=&ph2;
+            //d[1].prescribeMedication();
+            b.p=&p1;
+            b.ph=&ph2;
+            b.computeTotalBill();
+
+            cout<<"\n"<<endl;
+
+            presc3.p = &p1;
+            presc3.printDetails();
+            ph3.pres = &presc3;
+            d[1].t = &t2;
+            d[1].pres = &presc3;
+            d[1].ph=&ph3;
+            d[1].prescribeMedication();
+            cout << "\nDetails of pharmacy bills:" << endl;
+            cout << "Bill for MedicineA: " << ph3.generateBill() << endl;
+            b.p=&p1;
+            b.ph=&ph3;
+            b.computeTotalBill();*/
+            break;
+        }
+
+    }
+    catch (ExceptionHandler &e)
+    {
+        cout << "Exiting from the program" << endl;
+    }
+}
